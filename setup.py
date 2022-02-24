@@ -5,7 +5,7 @@ install_requires = ['numpy>=1.11.1', 'opencv-python', 'pillow']
 
 setup(
     name='ktorch',
-    version='0.1.0',
+    version='0.1.1',
     description='Some extensions for PyTorch and utilities using Pytorch',
     long_description='Some extensions for PyTorch and utilities using Pytorch',
     keywords='machine learning',
