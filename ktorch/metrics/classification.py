@@ -74,3 +74,11 @@ class ConfusionMatrix(object):
     def compute(self):
         return self.mat
 
+    def reduce_from_all_processes(self):
+        if not torch.distributed.is_available():
+            return
+        if not torch.distributed.is_initialized():
+            return
+        torch.distributed.barrier()
+        torch.distributed.all_reduce(self.mat)
+
