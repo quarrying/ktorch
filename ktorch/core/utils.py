@@ -1,10 +1,12 @@
 import os
 import glob
+import socket
+import datetime
 import functools
 
 import torch
 
-__all__ = ['sum_tensor_list', 'get_lastest_model_path']
+__all__ = ['sum_tensor_list', 'get_lastest_model_path', 'get_run_name', 'get_run_save_dir']
 
 
 def sum_tensor_list(tensor_list):
@@ -33,3 +35,23 @@ def get_lastest_model_path(model_path):
     return model_path
 
 
+def get_run_name(run_tag=None):
+    """A unique name for each run 
+    
+    References:
+        https://github.com/ShuLiu1993/PANet/blob/master/lib/utils/misc.py
+    """
+    time_str = datetime.datetime.strftime(datetime.datetime.now(), '%y%m%d_%H%M%S')
+    if run_tag is not None:
+        run_name = '{}_{}@{}'.format(run_tag, time_str, socket.gethostname())
+    else:
+        run_name = '{}@{}'.format(time_str, socket.gethostname())
+    return run_name
+ 
+
+def get_run_save_dir(run_tag, save_dir, make_dir=True):
+    run_name = get_run_name(run_tag)
+    run_save_dir = os.path.join(os.path.expanduser(save_dir), run_name)
+    if make_dir:
+        os.makedirs(run_save_dir, exist_ok=True)
+    return run_save_dir
