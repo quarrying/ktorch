@@ -4,7 +4,7 @@ import functools
 
 import torch
 
-__all__ = ['sum_tensor_list', 'get_lastest_model_path', 'accuracy']
+__all__ = ['sum_tensor_list', 'get_lastest_model_path']
 
 
 def sum_tensor_list(tensor_list):
@@ -32,22 +32,4 @@ def get_lastest_model_path(model_path):
             model_path = filenames[0]
     return model_path
 
-
-def accuracy(output, target, topk=(1,)):
-    """Computes the accuracy over the k top predictions for the specified values of k"""
-    with torch.no_grad():
-        maxk = max(topk)
-        batch_size = target.size(0)
-
-        _, pred = output.topk(maxk, 1, True, True)
-        # (batch_size, maxk) -> (maxk, batch_size)
-        pred = pred.t()
-        # (maxk, batch_size) == (1, batch_size) -> (maxk, batch_size)
-        correct = pred.eq(target[None])
-
-        res = []
-        for k in topk:
-            correct_k = correct[:k].flatten().sum(dtype=torch.float32)
-            res.append(correct_k * (100.0 / batch_size))
-        return res
 

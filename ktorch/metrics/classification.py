@@ -1,6 +1,29 @@
 import torch
 
-__all__ = ['TopK', 'ConfusionMatrix']
+__all__ = ['accuracy', 'TopK', 'ConfusionMatrix']
+
+
+def accuracy(output, target, topk=(1,)):
+    """Computes the accuracy over the k top predictions for the specified values of k
+    
+    References:
+        torchvision
+    """
+    with torch.no_grad():
+        maxk = max(topk)
+        batch_size = target.size(0)
+
+        _, pred = output.topk(maxk, 1, True, True)
+        # (batch_size, maxk) -> (maxk, batch_size)
+        pred = pred.t()
+        # (maxk, batch_size) == (1, batch_size) -> (maxk, batch_size)
+        correct = pred.eq(target[None])
+
+        res = []
+        for k in topk:
+            correct_k = correct[:k].flatten().sum(dtype=torch.float32)
+            res.append(correct_k * (100.0 / batch_size))
+        return res
 
 
 class TopK(object):
