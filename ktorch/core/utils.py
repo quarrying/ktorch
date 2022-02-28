@@ -5,6 +5,7 @@ import datetime
 import functools
 
 import torch
+import khandy
 
 __all__ = ['sum_tensor_list', 'get_latest_model_path', 'get_run_name', 'get_run_save_dir']
 
@@ -18,15 +19,16 @@ def sum_tensor_list(tensor_list):
                             torch.zeros_like(tensor_list[0]))
                             
                             
-def get_latest_model_path(model_path):
+def get_latest_model_path(model_path, extension='pth'):
     """
     References:
         tf.train.latest_checkpoint
     """
+    extension = khandy.normalize_extension(extension)
     if model_path is not None:
         model_path = os.path.expanduser(model_path)
         if os.path.isdir(model_path):
-            filenames = glob.glob(os.path.join(model_path, '*.pth'))
+            filenames = glob.glob(os.path.join(model_path, '*' + extension))
             if len(filenames) == 0:
                 return None
             sorted_key = lambda t: os.stat(t).st_mtime
