@@ -6,7 +6,7 @@ import functools
 
 import torch
 
-__all__ = ['sum_tensor_list', 'get_lastest_model_path', 'get_run_name', 'get_run_save_dir']
+__all__ = ['sum_tensor_list', 'get_latest_model_path', 'get_run_name', 'get_run_save_dir']
 
 
 def sum_tensor_list(tensor_list):
@@ -18,7 +18,7 @@ def sum_tensor_list(tensor_list):
                             torch.zeros_like(tensor_list[0]))
                             
                             
-def get_lastest_model_path(model_path):
+def get_latest_model_path(model_path):
     """
     References:
         tf.train.latest_checkpoint
