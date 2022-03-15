@@ -52,7 +52,7 @@ def get_run_name(run_tag=None):
     return run_name
  
 
-def get_run_save_dir(run_tag, save_dir, make_dir=True):
+def get_run_save_dir(save_dir, run_tag=None, make_dir=True):
     run_name = get_run_name(run_tag)
     run_save_dir = os.path.join(os.path.expanduser(save_dir), run_name)
     if make_dir:
