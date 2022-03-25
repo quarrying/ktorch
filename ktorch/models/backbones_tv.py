@@ -14,6 +14,7 @@ class TvResNet18Backbone(torch.nn.Module):
             self.model.layer4[0].conv1.stride = 1
             self.model.layer4[0].downsample[0].stride = 1
             self.model.layer4[0].stride = 1
+        self.last_channels = self.model.fc.in_features
 
     def forward(self, x):
         x = self.model.conv1(x)
@@ -37,6 +38,7 @@ class TvResNet34Backbone(torch.nn.Module):
             self.model.layer4[0].conv1.stride = 1
             self.model.layer4[0].downsample[0].stride = 1
             self.model.layer4[0].stride = 1
+        self.last_channels = self.model.fc.in_features
 
     def forward(self, x):
         x = self.model.conv1(x)
@@ -60,7 +62,8 @@ class TvResNet50Backbone(torch.nn.Module):
             self.model.layer4[0].conv2.stride = 1
             self.model.layer4[0].downsample[0].stride = 1
             self.model.layer4[0].stride = 1
-        
+        self.last_channels = self.model.fc.in_features
+
     def forward(self, x):
         x = self.model.conv1(x)
         x = self.model.bn1(x)
@@ -78,6 +81,7 @@ class TvMobileNetV2Backbone(torch.nn.Module):
     def __init__(self, pretrained, **kwargs):
         super(TvMobileNetV2Backbone, self).__init__()
         self.model = torchvision.models.mobilenet_v2(pretrained=pretrained, **kwargs)
+        self.last_channels = self.model.last_channel 
 
     def forward(self, x):
         x = self.model.features(x)
@@ -88,6 +92,7 @@ class TvShuffleNetV2x10backbone(torch.nn.Module):
     def __init__(self, pretrained, **kwargs):
         super(TvShuffleNetV2x10backbone, self).__init__()
         self.model = torchvision.models.shufflenet_v2_x1_0(pretrained=pretrained, **kwargs)
+        self.last_channels = self.model._stage_out_channels[-1]
 
     def forward(self, x):
         x = self.model.conv1(x)
