@@ -6,7 +6,7 @@ __all__ = ['TvResNet18Backbone', 'TvResNet34Backbone', 'TvResNet50Backbone',
 
 
 class TvResNet18Backbone(torch.nn.Module):
-    def __init__(self, pretrained=True, last_stride=1, **kwargs):
+    def __init__(self, pretrained=True, last_stride=2, **kwargs):
         super(TvResNet18Backbone, self).__init__()
         assert last_stride in [1, 2]
         self.model = torchvision.models.resnet18(pretrained=pretrained, **kwargs)
@@ -29,7 +29,7 @@ class TvResNet18Backbone(torch.nn.Module):
         
         
 class TvResNet34Backbone(torch.nn.Module):
-    def __init__(self, pretrained=True, last_stride=1, **kwargs):
+    def __init__(self, pretrained=True, last_stride=2, **kwargs):
         super(TvResNet34Backbone, self).__init__()
         assert last_stride in [1, 2]
         self.model = torchvision.models.resnet34(pretrained=pretrained, **kwargs)
@@ -52,7 +52,7 @@ class TvResNet34Backbone(torch.nn.Module):
         
         
 class TvResNet50Backbone(torch.nn.Module):
-    def __init__(self, pretrained=True, last_stride=1, **kwargs):
+    def __init__(self, pretrained=True, last_stride=2, **kwargs):
         super(TvResNet50Backbone, self).__init__()
         assert last_stride in [1, 2]
         self.model = torchvision.models.resnet50(pretrained=pretrained, **kwargs)
