@@ -1,16 +1,6 @@
 import torch
 
-__all__ = ['SharedBatchNorm1d', 'ClassifierModel']
-
-
-class SharedBatchNorm1d(torch.nn.BatchNorm1d):
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        # RuntimeError: a leaf Variable that requires grad is being used in an in-place operation.
-        with torch.no_grad():
-            gamma_mean = torch.mean(self.weight)
-            self.weight.fill_(gamma_mean)
-        output = super(SharedBatchNorm1d, self).forward(input)
-        return output
+__all__ = ['ClassifierModel']
 
 
 class ClassifierModel(torch.nn.Module):
