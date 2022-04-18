@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-__all__ = ['LSRCrossEntropyLoss', 'OhmLsrCrossEntropyLoss', 'DiceLoss']
+
+__all__ = ['LSRCrossEntropyLoss', 'OhmLsrCrossEntropyLoss', 'DiceLoss', 'FocalLoss']
 
 
 class LSRCrossEntropyLoss(nn.Module):
@@ -66,5 +68,34 @@ class DiceLoss(nn.Module):
         denominator = input_flat.sum(1) + target_flat.sum(1) + self.smooth
         dice = (2. * intersection + self.smooth) / denominator
         loss = 1 - dice.mean()
+        return loss
+
+
+class FocalLoss(nn.Module):
+    """Focal loss.
+
+    Args:
+        gamma (float): Focusing parameter in focal loss.
+            Defaults to 2.0.
+        alpha (float): The parameter in balanced form of focal
+            loss. Defaults to 0.25.
+    
+    References:
+        [2017] Focal Loss for Dense Object Detection
+    """
+    def __init__(self, gamma=2.0, alpha=0.25):
+        super(FocalLoss, self).__init__()
+        self.gamma = gamma
+        self.alpha = alpha
+
+    def forward(self, input, target):
+        if target.dim() == 1 or (target.dim() == 2 and target.shape[1] == 1):
+            target = F.one_hot(target.view(-1).long(), num_classes=2)
+        assert input.shape == target.shape, 'pred and target should be in the same shape.'
+        pred_sigmoid = input.sigmoid()
+        target = target.type_as(input)
+        pt = (1 - pred_sigmoid) * target + pred_sigmoid * (1 - target)
+        focal_weight = (self.alpha * target + (1 - self.alpha) * (1 - target)) * pt.pow(self.gamma)
+        loss = F.binary_cross_entropy_with_logits(input, target, weight=focal_weight, reduction='mean') 
         return loss
 
