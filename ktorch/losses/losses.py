@@ -96,6 +96,7 @@ class FocalLoss(nn.Module):
         target = target.type_as(input)
         pt = (1 - pred_sigmoid) * target + pred_sigmoid * (1 - target)
         focal_weight = (self.alpha * target + (1 - self.alpha) * (1 - target)) * pt.pow(self.gamma)
-        loss = F.binary_cross_entropy_with_logits(input, target, weight=focal_weight, reduction='mean') 
-        return loss
+        loss = focal_weight * F.binary_cross_entropy_with_logits(input, target, reduction='none') 
+        return loss.mean()
+
 
