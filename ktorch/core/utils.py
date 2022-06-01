@@ -1,14 +1,17 @@
 import os
 import glob
 import socket
+import random
 import datetime
 import functools
 
 import torch
 import khandy
+import numpy as np
+
 
 __all__ = ['sum_tensor_list', 'get_latest_model_path', 'get_run_name', 
-           'get_run_save_dir', 'check_state_dict_keys']
+           'get_run_save_dir', 'check_state_dict_keys', 'set_random_seed']
 
 
 def sum_tensor_list(tensor_list):
@@ -76,3 +79,32 @@ def check_state_dict_keys(model, ckpt_state_dict):
     print('Missing keys:           {}'.format(len(missing_keys)))
     print('Unused checkpoint keys: {}'.format(len(unused_ckpt_keys)))
     assert len(used_ckpt_keys) > 0, 'load NONE from pretrained checkpoint'
+
+
+def set_random_seed(seed, deterministic=False):
+    """Set random seed.
+
+    Args:
+        seed (int): Seed to be used.
+        deterministic (bool): Whether to set the deterministic option for
+            CUDNN backend, i.e., set `torch.backends.cudnn.deterministic`
+            to True and `torch.backends.cudnn.benchmark` to False.
+            Default: False.
+            
+    References:
+        https://www.zhihu.com/question/406970101
+        https://pytorch.org/docs/stable/notes/randomness.html
+        https://pytorch.org/docs/stable/generated/torch.manual_seed.html
+        https://pytorch.org/docs/stable/generated/torch.cuda.manual_seed.html
+        https://pytorch.org/docs/stable/generated/torch.cuda.manual_seed_all.html
+    """
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    if deterministic:
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.enabled = True
+    
