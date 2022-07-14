@@ -19,7 +19,8 @@ class ImageAndLabelDataset(torch.utils.data.Dataset):
         parts = record.split(',')
         path = ','.join(parts[:-1])
         label = int(parts[-1])
-        image = khandy.imread_pil(path, to_mode='RGB')
+        image = khandy.imread_pil(path)
+        image = image.convert('RGB')
         if self.transform:
             image = self.transform(image)
         return image, label
@@ -38,7 +39,8 @@ class PathImageAndLabelDataset(torch.utils.data.Dataset):
         parts = record.split(',')
         path = ','.join(parts[:-1])
         label = int(parts[-1])
-        image = khandy.imread_pil(path, to_mode='RGB')
+        image = khandy.imread_pil(path)
+        image = image.convert('RGB')
         if self.transform:
             image = self.transform(image)
         return path, image, label
@@ -64,7 +66,8 @@ class PathAndImageDataset(torch.utils.data.Dataset):
     
     def __getitem__(self, idx):
         path = self.records[idx]
-        image = khandy.imread_pil(path, to_mode='RGB')
+        image = khandy.imread_pil(path)
+        image = image.convert('RGB')
         if self.transform:
             image = self.transform(image)
         return path, image
