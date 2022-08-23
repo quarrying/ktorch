@@ -48,10 +48,10 @@ def get_run_name(run_tag=None):
         https://github.com/ShuLiu1993/PANet/blob/master/lib/utils/misc.py
     """
     time_str = datetime.datetime.strftime(datetime.datetime.now(), '%y%m%d_%H%M%S')
-    if run_tag is not None:
-        run_name = '{}_{}@{}'.format(run_tag, time_str, socket.gethostname())
-    else:
+    if (run_tag is None) or (run_tag.strip() == ''):
         run_name = '{}@{}'.format(time_str, socket.gethostname())
+    else:
+        run_name = '{}_{}@{}'.format(run_tag.strip(), time_str, socket.gethostname())
     return run_name
  
 
