@@ -245,3 +245,54 @@ class RandomShift(object):
             # https://pytorch.org/vision/stable/generated/torchvision.transforms.functional.crop.html
             return torchvision.transforms.functional.crop(image, -y_shift, -x_shift, input_h, input_w)
         return image
+
+
+class GridMask(object):
+    def __init__(self, d_min, d_max, r=0.6, p=0.5):
+        """
+        d_min: the minimum length of one unit.
+        d_max: the maximum length of one unit.
+        r: the ratio of the shorter gray edge in a unit.
+        """
+        self.d_min = d_min
+        self.d_max = d_max
+        self.r = r
+        self.p = p
+        
+    def __call__(self, img):
+        if np.random.rand() > self.p:
+            return img
+        
+        # d is the length of one unit. 
+        d = np.random.randint(self.d_min, self.d_max + 1)
+        # delta_x and delta_y are the distances between 
+        # the first intact unit and boundary of the image.
+        delta_x = np.random.randint(d)
+        delta_y = np.random.randint(d)
+
+        img = np.asarray(img).copy()
+        h, w = img.shape[:2]
+        l = int(d * self.r + 0.5)
+        mask = np.ones((h, w), bool)
+        num_units_x = w // d
+        num_units_y = h // d
+        
+        # 下面的代码设置的是非 mask 区域
+        for i in range(-1, num_units_y + 1):
+            s = d * i + delta_y
+            t = s + l
+            s = max(min(s, h), 0)
+            t = max(min(t, h), 0)
+            mask[s:t, :] = False
+        for i in range(-1, num_units_x + 1):
+            s = d * i + delta_x
+            t = s + l
+            s = max(min(s, w), 0)
+            t = max(min(t, w), 0)
+            mask[:, s:t] = False
+            
+        mask = np.expand_dims(mask, axis=-1)
+        img = np.where(mask, 0, img)
+        img = Image.fromarray(img)
+        return img
+
