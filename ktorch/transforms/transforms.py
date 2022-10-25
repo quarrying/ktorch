@@ -1,5 +1,6 @@
 import math
 import random
+import numbers
 from io import BytesIO
 from collections.abc import Iterable
 
@@ -216,4 +217,31 @@ class Cutout(object):
             image = np.asarray(image).copy()
             image[y_min:y_max, x_min:x_max] = self.mask_color
             image = Image.fromarray(image)
+        return image
+
+
+class RandomShift(object):
+    def __init__(self, x_shift_min, x_shift_max, y_shift_min, y_shift_max, p=0.5):
+        assert isinstance(x_shift_min, numbers.Integral)
+        assert isinstance(x_shift_max, numbers.Integral)
+        assert isinstance(y_shift_min, numbers.Integral)
+        assert isinstance(y_shift_max, numbers.Integral)
+        assert x_shift_min <= x_shift_max
+        assert y_shift_min <= y_shift_max
+        
+        self.x_shift_min = x_shift_min
+        self.x_shift_max = x_shift_max
+        self.y_shift_min = y_shift_min
+        self.y_shift_max = y_shift_max
+        self.p = p
+        
+    def __call__(self, image):
+        if random.random() < self.p:
+            # random.randint return random integer in range [a, b], including both end points.
+            x_shift = random.randint(self.x_shift_min, self.x_shift_max)
+            y_shift = random.randint(self.y_shift_min, self.y_shift_max)
+            input_w, input_h =  _get_image_size(image)
+            # torchvision.transforms.functional.crop(img: torch.Tensor, top: int, left: int, height: int, width: int)
+            # https://pytorch.org/vision/stable/generated/torchvision.transforms.functional.crop.html
+            return torchvision.transforms.functional.crop(image, -y_shift, -x_shift, input_h, input_w)
         return image
