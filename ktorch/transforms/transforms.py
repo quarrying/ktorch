@@ -11,7 +11,7 @@ import torchvision
 import numpy as np
 
 __all__ = ['RandomScale', 'RandomRotate90', 'RandomScaleBlur', 'RandomJPEGQuality', 
-           'Cutout', 'CenterPadTo', 'CenterCropTo']
+           'CenterPadTo', 'CenterCropTo', 'Cutout', 'RandomShift', 'GridMask']
 
 
 class RandomScale(object):
@@ -54,7 +54,6 @@ class RandomRotate90(object):
 
     def __call__(self, image):
         if random.random() < self.p:
-
             if self.num_repeats == 0:
                 return image
             elif self.num_repeats == 1:
@@ -212,7 +211,7 @@ class Cutout(object):
         return x_min, y_min, x_max, y_max
         
     def __call__(self, image):
-        if np.random.random() < self.p:
+        if random.random() < self.p:
             x_min, y_min, x_max, y_max = self.get_params(image, self.mask_size, self.cutout_inside)
             image = np.asarray(image).copy()
             image[y_min:y_max, x_min:x_max] = self.mask_color
@@ -260,7 +259,7 @@ class GridMask(object):
         self.p = p
         
     def __call__(self, img):
-        if np.random.rand() > self.p:
+        if random.random() > self.p:
             return img
         
         # d is the length of one unit. 
