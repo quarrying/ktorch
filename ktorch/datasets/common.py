@@ -7,8 +7,14 @@ __all__ = ['ImageAndLabelDataset', 'PathImageAndLabelDataset', 'PathAndImageData
 
 
 class ImageAndLabelDataset(torch.utils.data.Dataset):
-    def __init__(self, filename, transform=None):
-        self.records = khandy.load_list(filename)
+    def __init__(self, filename_or_else, transform=None):
+        if isinstance(filename_or_else, str):
+            self.records = khandy.load_list(filename_or_else)
+        elif isinstance(filename_or_else, (list, tuple)):
+            self.records = filename_or_else
+        else:
+            raise ValueError('unsupported type!')
+        
         self.transform = transform
 
     def __len__(self):
@@ -26,8 +32,13 @@ class ImageAndLabelDataset(torch.utils.data.Dataset):
 
 
 class PathImageAndLabelDataset(torch.utils.data.Dataset):
-    def __init__(self, filename, transform=None):
-        self.records = khandy.load_list(filename)
+    def __init__(self, filename_or_else, transform=None):
+        if isinstance(filename_or_else, str):
+            self.records = khandy.load_list(filename_or_else)
+        elif isinstance(filename_or_else, (list, tuple)):
+            self.records = filename_or_else
+        else:
+            raise ValueError('unsupported type!')
         self.transform = transform
 
     def __len__(self):
