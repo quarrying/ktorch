@@ -2,7 +2,8 @@ import torch
 import torchvision
 
 __all__ = ['TvResNet18Backbone', 'TvResNet34Backbone', 'TvResNet50Backbone', 
-           'TvMobileNetV2Backbone', 'TvShuffleNetV2x10Backbone', 'TvSwinTBackbone']
+           'TvMobileNetV2Backbone', 'TvShuffleNetV2x10Backbone', 'TvSwinTBackbone',
+           'TvSwinV2TBackbone']
 
 
 class TvResNet18Backbone(torch.nn.Module):
@@ -108,6 +109,19 @@ class TvSwinTBackbone(torch.nn.Module):
     def __init__(self, pretrained, **kwargs):
         super(TvSwinTBackbone, self).__init__()
         self.model = torchvision.models.swin_t(pretrained=pretrained, **kwargs)
+        self.last_channels = self.model.head.in_features
+
+    def forward(self, x):
+        x = self.model.features(x)
+        x = self.model.norm(x)
+        x = self.model.permute(x)
+        return x
+        
+        
+class TvSwinV2TBackbone(torch.nn.Module):
+    def __init__(self, pretrained, **kwargs):
+        super(TvSwinV2TBackbone, self).__init__()
+        self.model = torchvision.models.swin_v2_t(pretrained=pretrained, **kwargs)
         self.last_channels = self.model.head.in_features
 
     def forward(self, x):
