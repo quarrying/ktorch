@@ -15,8 +15,11 @@ class LSRCrossEntropyLoss(nn.Module):
 
     def forward(self, input, target):
         log_probs = torch.nn.functional.log_softmax(input, dim=-1)
-
-        nll_loss = -log_probs.gather(dim=-1, index=target.unsqueeze(1)).squeeze(1)
+        if target.ndim == 1:
+            nll_loss = -log_probs.gather(dim=-1, index=target.unsqueeze(1)).squeeze(1)
+        else:
+            # target is one hot label
+            nll_loss = torch.sum(-log_probs * target, dim=-1)
         lsr_term = -log_probs.mean(dim=-1)
         loss = (1 - self.epsilon) * nll_loss + self.epsilon * lsr_term
         return loss.mean()
