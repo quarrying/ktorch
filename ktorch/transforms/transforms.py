@@ -7,11 +7,13 @@ from collections.abc import Iterable
 import PIL
 from PIL import Image
 import torch
+import torch.nn.functional as F
 import torchvision
 import numpy as np
 
 __all__ = ['RandomScale', 'RandomRotate90', 'RandomScaleBlur', 'RandomJPEGQuality', 
-           'CenterPadTo', 'CenterCropTo', 'Cutout', 'RandomShift', 'GridMask']
+           'CenterPadTo', 'CenterCropTo', 'Cutout', 'RandomShift', 'GridMask',
+           'BatchResizeMix']
 
 
 class RandomScale(object):
@@ -295,3 +297,42 @@ class GridMask(object):
         img = Image.fromarray(img)
         return img
 
+
+class BatchResizeMix(object):
+    """
+    References:
+        [2020] ResizeMix: Mixing Data with Preserved Object Information and True Labels
+    """
+    def __init__(self, lamb_min=0.1, lamb_max=0.8):
+        self.lamb_min = lamb_min
+        self.lamb_max = lamb_max
+        
+    def __call__(self, inputs, targets):
+        """Mix the batch inputs and batch one-hot format ground truth.
+
+        Args:
+            inputs (Tensor): A batch of images tensor in the shape of
+                ``(N, C, H, W)``.
+            targets (Tensor): A batch of one-hot format labels in the
+                shape of ``(N, num_classes)``.
+
+        Returns:
+            Tuple[Tensor, Tensor): The mixed inputs and targets.
+        """
+        batch_size, _, image_height, image_width = inputs.shape
+        cut_h = np.random.randint(int(image_height * self.lamb_min), int(image_height * self.lamb_max))
+        cut_w = np.random.randint(int(image_width * self.lamb_min), int(image_width * self.lamb_max))
+        y_min = np.random.randint(0, image_height - cut_h)
+        x_min = np.random.randint(0, image_width - cut_w)
+        y_max = y_min + cut_h
+        x_max = x_min + cut_w
+        lamb = (y_max - y_min) * (x_max - x_min) / (image_height * image_width)
+
+        index = list(range(batch_size))
+        random.shuffle(index)
+
+        inputs[:, :, y_min:y_max, x_min:x_max] = F.interpolate(
+            inputs[index], size=(y_max - y_min, x_max - x_min), mode='bilinear', align_corners=False)
+        targets = (1 - lamb) * targets + lamb * targets[index, :]
+        return inputs, targets
+    
