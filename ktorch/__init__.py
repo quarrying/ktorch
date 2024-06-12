@@ -1,4 +1,5 @@
 from .core import *
+from .core import state_dict
 
 from . import datasets
 from . import metrics

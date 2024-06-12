@@ -11,7 +11,7 @@ import numpy as np
 
 
 __all__ = ['sum_tensor_list', 'get_latest_model_path', 'get_run_name', 
-           'get_run_save_dir', 'check_state_dict_keys', 'set_random_seed']
+           'get_run_save_dir', 'set_random_seed']
 
 
 def sum_tensor_list(tensor_list):
@@ -61,24 +61,6 @@ def get_run_save_dir(save_dir, run_tag=None, make_dir=True):
     if make_dir:
         os.makedirs(run_save_dir, exist_ok=True)
     return run_save_dir
-
-
-def check_state_dict_keys(model, ckpt_state_dict):
-    assert isinstance(model, (torch.nn.Module, dict))
-    assert isinstance(ckpt_state_dict, dict)
-
-    ckpt_keys = set(ckpt_state_dict.keys())
-    if isinstance(model, torch.nn.Module):
-        model_keys = set(model.state_dict().keys())
-    else:
-        model_keys = set(model.keys())
-    used_ckpt_keys = model_keys & ckpt_keys
-    unused_ckpt_keys = ckpt_keys - model_keys
-    missing_keys = model_keys - ckpt_keys
-    print('Used keys:              {}'.format(len(used_ckpt_keys)))
-    print('Missing keys:           {}'.format(len(missing_keys)))
-    print('Unused checkpoint keys: {}'.format(len(unused_ckpt_keys)))
-    assert len(used_ckpt_keys) > 0, 'load NONE from pretrained checkpoint'
 
 
 def set_random_seed(seed, deterministic=False):
