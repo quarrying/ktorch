@@ -10,8 +10,8 @@ class LearningRateWarmup(object):
         self.global_step = 0
         self.warmup_lr = 0
         
-    def warmup_learning_rate(self, curr_interation):
-        self.warmup_lr = self.target_lr * curr_interation / self.warmup_iteration
+    def warmup_learning_rate(self, curr_iteration):
+        self.warmup_lr = self.target_lr * curr_iteration / self.warmup_iteration
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = self.warmup_lr
             

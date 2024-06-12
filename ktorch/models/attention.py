@@ -5,6 +5,10 @@ __all__ = ['SEBlock', 'CBAM']
 
 
 class SEBlock(nn.Module):
+    """
+    References:
+        [2018 CVPR] Squeeze-and-Excitation Networks 
+    """
     def __init__(self, in_channels, reduction=16):
         super(SEBlock, self).__init__()
         self.gap = nn.AdaptiveAvgPool2d(1)
