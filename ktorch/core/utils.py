@@ -4,6 +4,8 @@ import socket
 import random
 import datetime
 import functools
+from dataclasses import dataclass
+from typing import List, Union, Optional
 
 import torch
 import khandy
@@ -11,7 +13,8 @@ import numpy as np
 
 
 __all__ = ['sum_tensor_list', 'get_latest_model_path', 'get_run_name', 
-           'get_run_save_dir', 'set_random_seed']
+           'get_run_save_dir', 'set_random_seed', 'ModelParameterInfo',
+           'convert_parameter_infos_to_markdown_table', 'get_model_parameter_infos']
 
 
 def sum_tensor_list(tensor_list):
@@ -90,3 +93,46 @@ def set_random_seed(seed, deterministic=False):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.enabled = True
     
+
+@dataclass
+class ModelParameterInfo:
+    order: int
+    name: str
+    requires_grad: bool
+    dtype: torch.dtype
+    shape: torch.Size
+    initialized: Optional[bool]
+    min_val: float
+    max_val: float
+    
+    
+def convert_parameter_infos_to_markdown_table(parameter_infos: List[ModelParameterInfo]) -> khandy.MarkdownTable:
+    headers = ['No.', 'name', 'requires_grad', 'dtype', 'shape', 'initialized', 'min_val', 'max_val']
+    align_types = [khandy.MarkdownTableAlignType.DEFAULT for _ in range(len(headers))]
+    rows = []
+    for parameter_info in parameter_infos:
+        initialized = 'N/A' if parameter_info.initialized is None else str(parameter_info.initialized)
+        one_row = [str(parameter_info.order), str(parameter_info.name), 
+                   str(parameter_info.requires_grad), str(parameter_info.dtype), 
+                   str(tuple(parameter_info.shape)), initialized, 
+                   f'{parameter_info.min_val:.5f}', f'{parameter_info.max_val:.5f}']
+        rows.append(one_row)
+    return khandy.MarkdownTable(headers, align_types, rows)
+
+
+def get_model_parameter_infos(model: torch.nn.Module, missing_keys=None, convert_to_table=True
+                              ) -> Union[List[ModelParameterInfo], khandy.MarkdownTable]:
+    parameter_infos = []
+    for k, (name, param) in enumerate(model.named_parameters()):
+        if missing_keys is None:
+            initialized = None
+        else:
+            initialized =  name not in missing_keys
+        parameter_info = ModelParameterInfo(k+1, name, param.requires_grad, param.dtype, 
+                                            param.shape, initialized, param.min(), param.max())
+        parameter_infos.append(parameter_info)
+    if convert_to_table:
+        return convert_parameter_infos_to_markdown_table(parameter_infos)
+    else:
+        return parameter_infos
+
