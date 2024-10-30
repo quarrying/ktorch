@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 __all__ = ['NormalizedLinear', 'AdditiveCosineMarginLinear', 
-           'AdaptiveMarginLinear', 'ZeroMeanLinear']
+           'AdaptiveMarginLinear', 'WeightCentralizedLinear']
 
 
 class NormalizedLinear(nn.Module):
@@ -82,9 +82,9 @@ class AdaptiveMarginLinear(nn.Module):
         return output
         
 
-class ZeroMeanLinear(nn.Module):
+class WeightCentralizedLinear(nn.Module):
     def __init__(self, in_features, out_features, device=None, dtype=None):
-        super(ZeroMeanLinear, self).__init__()
+        super(WeightCentralizedLinear, self).__init__()
         factory_kwargs = {'device': device, 'dtype': dtype}
         self.in_features = in_features
         self.out_features = out_features
@@ -96,10 +96,8 @@ class ZeroMeanLinear(nn.Module):
         nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
         
     def forward(self, input): 
-        with torch.no_grad():
-            mean = torch.mean(self.weight, dim=0, keepdim=True)
-            self.weight -= mean
-        return F.linear(input, self.weight)
+        mean = torch.mean(self.weight, dim=0, keepdim=True)
+        return F.linear(input, self.weight - mean)
     
     def extra_repr(self):
         return 'in_features={}, out_features={}'.format(self.in_features, self.out_features)
