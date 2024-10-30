@@ -23,7 +23,7 @@ class ClassifierModel(nn.Module):
         
 
 class GpBnFcBn(nn.Module):
-    def __init__(self, in_channels, embedding_size=512, pooling_type='gap'):
+    def __init__(self, in_channels, embedding_size=512, pooling_type='gap', use_ccl_norm=False):
         super(GpBnFcBn, self).__init__()
         if pooling_type.lower() == 'gmp':
             self.gp = nn.AdaptiveMaxPool2d(1)
@@ -36,7 +36,10 @@ class GpBnFcBn(nn.Module):
         self.bn1 = nn.BatchNorm2d(in_channels)
         self.bn1.bias.requires_grad_(False)
         self.fc = nn.Conv2d(in_channels, embedding_size, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(embedding_size)
+        if use_ccl_norm:
+            self.bn2 = CclNorm2d(embedding_size)
+        else:
+            self.bn2 = nn.BatchNorm2d(embedding_size)
         self.bn2.bias.requires_grad_(False)
  
     def forward(self, x):
