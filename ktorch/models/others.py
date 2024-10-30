@@ -4,7 +4,7 @@ import torch.nn as nn
 from .pooling import GlobalAttentionPooling
 
 __all__ = ['ClassifierModel', 'GpBnFcBn', 'GpLnFcLn', 
-           'CCLNorm2d', 'BatchL2Norm']
+           'CclNorm2d', 'BatchL2Norm']
 
 
 class ClassifierModel(nn.Module):
@@ -74,7 +74,7 @@ class GpLnFcLn(nn.Module):
         return x
     
     
-class CCLNorm2d(torch.nn.BatchNorm2d):
+class CclNorm2d(torch.nn.BatchNorm2d):
     """
     References:
         [2018] Face Recognition via Centralized Coordinate Learning
