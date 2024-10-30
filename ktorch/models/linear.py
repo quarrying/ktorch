@@ -7,14 +7,14 @@ import torch.nn.functional as F
 from .others import BatchL2Norm
 
 
-__all__ = ['NormalizedLinear', 'AdditiveCosineMarginLinear', 
+__all__ = ['L2NormalizedLinear', 'AdditiveCosineMarginLinear', 
            'AdaptiveMarginLinear', 'WeightCentralizedLinear',
-           'WeightL2NormalizedLinear', 'AdaptiveNormalizedLinear']
+           'WeightL2NormalizedLinear', 'AdaptiveL2NormalizedLinear']
 
 
-class NormalizedLinear(nn.Module):
+class L2NormalizedLinear(nn.Module):
     def __init__(self, in_features, out_features, device=None, dtype=None):
-        super(NormalizedLinear, self).__init__()
+        super(L2NormalizedLinear, self).__init__()
         factory_kwargs = {'device': device, 'dtype': dtype}
         self.in_features = in_features
         self.out_features = out_features
@@ -42,8 +42,7 @@ class AdditiveCosineMarginLinear(nn.Module):
         super(AdditiveCosineMarginLinear, self).__init__()
         self.scale = scale
         self.margin = margin
-        self.normalized_linear = NormalizedLinear(in_features, out_features, 
-                                                  device=device, dtype=dtype)
+        self.normalized_linear = L2NormalizedLinear(in_features, out_features, device=device, dtype=dtype)
         
     def forward(self, input, label):
         output_cos = self.normalized_linear(input)
@@ -71,8 +70,7 @@ class AdaptiveMarginLinear(nn.Module):
         assert 0 < gamma <= 1, 'gamma must be in (0, 1]'
         self.scale = scale
         self.gamma = gamma
-        self.normalized_linear = NormalizedLinear(in_features, out_features, 
-                                                  device=device, dtype=dtype)
+        self.normalized_linear = L2NormalizedLinear(in_features, out_features, device=device, dtype=dtype)
         
     def forward(self, input, label):
         output_cos = self.normalized_linear(input)
@@ -92,8 +90,7 @@ class WeightCentralizedLinear(nn.Module):
         factory_kwargs = {'device': device, 'dtype': dtype}
         self.in_features = in_features
         self.out_features = out_features
-        self.weight = nn.Parameter(torch.empty((out_features, in_features), 
-                                   **factory_kwargs))
+        self.weight = nn.Parameter(torch.empty((out_features, in_features), **factory_kwargs))
         self.reset_parameters()
         
     def reset_parameters(self):
@@ -120,8 +117,7 @@ class WeightL2NormalizedLinear(nn.Module):
         self.out_features = out_features
         self.eps = eps
         self.do_centralize = do_centralize
-        self.weight = nn.Parameter(torch.empty((out_features, in_features), 
-                                   **factory_kwargs))
+        self.weight = nn.Parameter(torch.empty((out_features, in_features), **factory_kwargs))
         self.reset_parameters()
         
     def reset_parameters(self):
@@ -144,9 +140,9 @@ class WeightL2NormalizedLinear(nn.Module):
         return F.linear(input, weight)
     
     
-class AdaptiveNormalizedLinear(torch.nn.Module):
+class AdaptiveL2NormalizedLinear(torch.nn.Module):
     def __init__(self, in_features, out_features, momentum: float = 0.1, eps=1e-12, device=None, dtype=None):
-        super(AdaptiveNormalizedLinear, self).__init__()
+        super(AdaptiveL2NormalizedLinear, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
         self.batch_l2_norm = BatchL2Norm(momentum=momentum, eps=eps, device=device, dtype=dtype)
