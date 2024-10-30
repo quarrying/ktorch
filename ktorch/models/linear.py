@@ -5,7 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 __all__ = ['NormalizedLinear', 'AdditiveCosineMarginLinear', 
-           'AdaptiveMarginLinear', 'WeightCentralizedLinear']
+           'AdaptiveMarginLinear', 'WeightCentralizedLinear',
+           'WeightL2NormalizedLinear']
 
 
 class NormalizedLinear(nn.Module):
@@ -102,3 +103,41 @@ class WeightCentralizedLinear(nn.Module):
     def extra_repr(self):
         return 'in_features={}, out_features={}'.format(self.in_features, self.out_features)
 
+
+class WeightL2NormalizedLinear(nn.Module):
+    """
+    Notes:
+        用在分类层, 使所有类的权重一样
+    """
+    def __init__(self, in_features, out_features, eps: float = 1e-12, 
+                 do_centralize=False, device=None, dtype=None):
+        super(WeightL2NormalizedLinear, self).__init__()
+        factory_kwargs = {'device': device, 'dtype': dtype}
+        self.in_features = in_features
+        self.out_features = out_features
+        self.eps = eps
+        self.do_centralize = do_centralize
+        self.weight = nn.Parameter(torch.empty((out_features, in_features), 
+                                   **factory_kwargs))
+        self.reset_parameters()
+        
+    def reset_parameters(self):
+        # Setting a=sqrt(5) in kaiming_uniform is the same as initializing with
+        # uniform(-1/sqrt(in_features), 1/sqrt(in_features)). For details, see
+        # https://github.com/pytorch/pytorch/issues/57109
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        
+    def forward(self, input): 
+        if self.do_centralize:
+            # Centralized 是在第 0 维上做的, L2 Normalized 是在第 1 维上做的
+            mean = torch.mean(self.weight, dim=0, keepdim=True)
+            centralized_weight = self.weight - mean
+        else:
+            centralized_weight = self.weight
+            
+        norm = centralized_weight.norm(p=2, dim=1, keepdim=True).clamp_min(self.eps).expand_as(input)
+        mean_norm = torch.mean(norm)
+        weight = mean_norm * centralized_weight / norm
+        return F.linear(input, weight)
+    
+    
