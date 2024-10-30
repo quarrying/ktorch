@@ -40,7 +40,7 @@ class GpBnFcBn(nn.Module):
             self.bn2 = CclNorm2d(embedding_size)
         else:
             self.bn2 = nn.BatchNorm2d(embedding_size)
-        self.bn2.bias.requires_grad_(False)
+            self.bn2.bias.requires_grad_(False)
  
     def forward(self, x):
         x = self.gp(x)
@@ -92,11 +92,12 @@ class CclNorm2d(torch.nn.BatchNorm2d):
     ) -> None:
         super().__init__(num_features, eps, momentum, False, track_running_stats, device, dtype)
         factory_kwargs = {'device': device, 'dtype': dtype}
-        self.weight_scalar = torch.nn.Parameter(torch.empty(1, **factory_kwargs))
-        
+        self.weight_scalar = torch.nn.Parameter(torch.ones(1, **factory_kwargs))
+
     def reset_parameters(self) -> None:
         self.reset_running_stats()
-        torch.nn.init.ones_(self.weight)
+        if hasattr(self, 'weight_scalar'):
+            torch.nn.init.ones_(self.weight_scalar)
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         self._check_input_dim(input)
@@ -128,7 +129,8 @@ class CclNorm2d(torch.nn.BatchNorm2d):
         # Buffers are only updated if they are to be tracked and we are in training mode. Thus they only need to be
         # passed when the update should occur (i.e. in training mode when they are tracked), or when buffer stats are
         # used for normalization (i.e. in eval mode when buffers are not None).
-        weight_vector = torch.full_like((self.num_features,), self.weight_scalar.item())
+        weight_vector = torch.full((self.num_features,), self.weight_scalar.item(), 
+                                   dtype=self.weight_scalar.dtype, device=self.weight_scalar.device)
         return torch.nn.functional.batch_norm(
             input,
             # If buffers are not to be tracked, ensure that they won't be updated

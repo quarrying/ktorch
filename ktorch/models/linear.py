@@ -134,7 +134,7 @@ class WeightL2NormalizedLinear(nn.Module):
         else:
             centralized_weight = self.weight
             
-        norm = centralized_weight.norm(p=2, dim=1, keepdim=True).clamp_min(self.eps).expand_as(input)
+        norm = centralized_weight.norm(p=2, dim=1, keepdim=True).clamp_min(self.eps)
         mean_norm = torch.mean(norm)
         weight = mean_norm * centralized_weight / norm
         return F.linear(input, weight)
@@ -146,9 +146,10 @@ class AdaptiveL2NormalizedLinear(torch.nn.Module):
         self.in_features = in_features
         self.out_features = out_features
         self.batch_l2_norm = BatchL2Norm(momentum=momentum, eps=eps, device=device, dtype=dtype)
-        self.weight_l2_norm = WeightL2NormalizedLinear(in_features, out_features, eps=eps, device=device, dtype=dtype)
+        self.linear = WeightL2NormalizedLinear(in_features, out_features, eps=eps, device=device, dtype=dtype)
+        self.weight = self.linear.weight
 
     def forward(self, input):
-        return self.weight_l2_norm(self.batch_l2_norm(input))
+        return self.linear(self.batch_l2_norm(input))
     
     
