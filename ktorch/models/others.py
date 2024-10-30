@@ -3,7 +3,8 @@ import torch.nn as nn
 
 from .pooling import GlobalAttentionPooling
 
-__all__ = ['ClassifierModel', 'GpBnFcBn', 'GpLnFcLn', 'CCLNorm2d']
+__all__ = ['ClassifierModel', 'GpBnFcBn', 'GpLnFcLn', 
+           'CCLNorm2d', 'BatchL2Norm']
 
 
 class ClassifierModel(nn.Module):
@@ -137,3 +138,27 @@ class CCLNorm2d(torch.nn.BatchNorm2d):
             self.eps,
         )
 
+
+class BatchL2Norm(nn.Module):
+    def __init__(self, momentum: float = 0.1, eps=1e-12, device=None, dtype=None):
+        factory_kwargs = {'device': device, 'dtype': dtype}
+        super(BatchL2Norm, self).__init__()
+        self.eps = eps
+        self.momentum = momentum
+        self.register_buffer('running_scale', torch.zeros(1, **factory_kwargs))
+        self.register_buffer('num_batches_tracked', torch.tensor(0, dtype=torch.long, device=device))
+        
+    def forward(self, x):
+        norm = torch.norm(x, p=2, dim=-1, keepdim=True).clamp(min=self.eps)
+        if self.training:
+            mean_scale = torch.mean(norm)
+            if self.num_batches_tracked == 0:
+                self.running_scale.add_(mean_scale)
+            else:
+                self.running_scale.mul_(1 - self.momentum).add_(mean_scale * self.momentum)
+            self.num_batches_tracked.add_(1)
+        else:
+            mean_scale = self.running_scale
+        x = mean_scale * x / norm
+        return x
+    

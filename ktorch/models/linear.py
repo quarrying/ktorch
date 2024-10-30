@@ -4,9 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from .others import BatchL2Norm
+
+
 __all__ = ['NormalizedLinear', 'AdditiveCosineMarginLinear', 
            'AdaptiveMarginLinear', 'WeightCentralizedLinear',
-           'WeightL2NormalizedLinear']
+           'WeightL2NormalizedLinear', 'AdaptiveNormalizedLinear']
 
 
 class NormalizedLinear(nn.Module):
@@ -139,5 +142,17 @@ class WeightL2NormalizedLinear(nn.Module):
         mean_norm = torch.mean(norm)
         weight = mean_norm * centralized_weight / norm
         return F.linear(input, weight)
+    
+    
+class AdaptiveNormalizedLinear(torch.nn.Module):
+    def __init__(self, in_features, out_features, momentum: float = 0.1, eps=1e-12, device=None, dtype=None):
+        super(AdaptiveNormalizedLinear, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.batch_l2_norm = BatchL2Norm(momentum=momentum, eps=eps, device=device, dtype=dtype)
+        self.weight_l2_norm = WeightL2NormalizedLinear(in_features, out_features, eps=eps, device=device, dtype=dtype)
+
+    def forward(self, input):
+        return self.weight_l2_norm(self.batch_l2_norm(input))
     
     
