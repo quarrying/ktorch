@@ -7,10 +7,10 @@ __all__ = ['TvResNet18Backbone', 'TvResNet34Backbone', 'TvResNet50Backbone',
 
 
 class TvResNet18Backbone(torch.nn.Module):
-    def __init__(self, pretrained=True, last_stride=2, **kwargs):
+    def __init__(self, weights=None, last_stride=2, **kwargs):
         super(TvResNet18Backbone, self).__init__()
         assert last_stride in [1, 2]
-        self.model = torchvision.models.resnet18(pretrained=pretrained, **kwargs)
+        self.model = torchvision.models.resnet18(weights=weights, **kwargs)
         if last_stride == 1:
             self.model.layer4[0].conv1.stride = 1
             self.model.layer4[0].downsample[0].stride = 1
@@ -31,10 +31,10 @@ class TvResNet18Backbone(torch.nn.Module):
         
         
 class TvResNet34Backbone(torch.nn.Module):
-    def __init__(self, pretrained=True, last_stride=2, **kwargs):
+    def __init__(self, weights=None, last_stride=2, **kwargs):
         super(TvResNet34Backbone, self).__init__()
         assert last_stride in [1, 2]
-        self.model = torchvision.models.resnet34(pretrained=pretrained, **kwargs)
+        self.model = torchvision.models.resnet34(weights=weights, **kwargs)
         if last_stride == 1:
             self.model.layer4[0].conv1.stride = 1
             self.model.layer4[0].downsample[0].stride = 1
@@ -55,10 +55,10 @@ class TvResNet34Backbone(torch.nn.Module):
         
         
 class TvResNet50Backbone(torch.nn.Module):
-    def __init__(self, pretrained=True, last_stride=2, **kwargs):
+    def __init__(self, weights=None, last_stride=2, **kwargs):
         super(TvResNet50Backbone, self).__init__()
         assert last_stride in [1, 2]
-        self.model = torchvision.models.resnet50(pretrained=pretrained, **kwargs)
+        self.model = torchvision.models.resnet50(weights=weights, **kwargs)
         if last_stride == 1:
             self.model.layer4[0].conv2.stride = 1
             self.model.layer4[0].downsample[0].stride = 1
@@ -79,9 +79,9 @@ class TvResNet50Backbone(torch.nn.Module):
         
         
 class TvMobileNetV2Backbone(torch.nn.Module):
-    def __init__(self, pretrained, **kwargs):
+    def __init__(self, weights=None, **kwargs):
         super(TvMobileNetV2Backbone, self).__init__()
-        self.model = torchvision.models.mobilenet_v2(pretrained=pretrained, **kwargs)
+        self.model = torchvision.models.mobilenet_v2(weights=weights, **kwargs)
         self.last_channels = self.model.last_channel 
 
     def forward(self, x):
@@ -90,9 +90,9 @@ class TvMobileNetV2Backbone(torch.nn.Module):
         
         
 class TvShuffleNetV2x10Backbone(torch.nn.Module):
-    def __init__(self, pretrained, **kwargs):
+    def __init__(self, weights=None, **kwargs):
         super(TvShuffleNetV2x10Backbone, self).__init__()
-        self.model = torchvision.models.shufflenet_v2_x1_0(pretrained=pretrained, **kwargs)
+        self.model = torchvision.models.shufflenet_v2_x1_0(weights=weights, **kwargs)
         self.last_channels = self.model._stage_out_channels[-1]
 
     def forward(self, x):
@@ -106,9 +106,9 @@ class TvShuffleNetV2x10Backbone(torch.nn.Module):
         
         
 class TvSwinTBackbone(torch.nn.Module):
-    def __init__(self, pretrained, **kwargs):
+    def __init__(self, weights, **kwargs):
         super(TvSwinTBackbone, self).__init__()
-        self.model = torchvision.models.swin_t(pretrained=pretrained, **kwargs)
+        self.model = torchvision.models.swin_t(weights=weights, **kwargs)
         self.last_channels = self.model.head.in_features
 
     def forward(self, x):
@@ -119,9 +119,9 @@ class TvSwinTBackbone(torch.nn.Module):
         
         
 class TvSwinV2TBackbone(torch.nn.Module):
-    def __init__(self, pretrained, **kwargs):
+    def __init__(self, weights, **kwargs):
         super(TvSwinV2TBackbone, self).__init__()
-        self.model = torchvision.models.swin_v2_t(pretrained=pretrained, **kwargs)
+        self.model = torchvision.models.swin_v2_t(weights=weights, **kwargs)
         self.last_channels = self.model.head.in_features
 
     def forward(self, x):

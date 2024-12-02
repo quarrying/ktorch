@@ -129,8 +129,7 @@ class CclNorm2d(torch.nn.BatchNorm2d):
         # Buffers are only updated if they are to be tracked and we are in training mode. Thus they only need to be
         # passed when the update should occur (i.e. in training mode when they are tracked), or when buffer stats are
         # used for normalization (i.e. in eval mode when buffers are not None).
-        weight_vector = torch.full((self.num_features,), self.weight_scalar.item(), 
-                                   dtype=self.weight_scalar.dtype, device=self.weight_scalar.device)
+        weight_vector = self.weight_scalar.expand(self.num_features)
         return torch.nn.functional.batch_norm(
             input,
             # If buffers are not to be tracked, ensure that they won't be updated
