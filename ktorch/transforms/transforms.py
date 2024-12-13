@@ -14,7 +14,7 @@ import numpy as np
 
 __all__ = ['RandomScale', 'RandomRotate90', 'RandomScaleBlur', 'RandomJPEGQuality', 
            'CenterPadTo', 'CenterCropTo', 'Cutout', 'RandomShift', 'GridMask',
-           'BatchResizeMix', 'PadRatio']
+           'BatchResizeMix', 'PadRatio', 'MinMaxNormalize']
 
 
 class RandomScale(object):
@@ -358,8 +358,8 @@ class PadRatio(object):
         self.fill = fill
         self.padding_mode = padding_mode
 
-    def forward(self, img):
-        w, h = F.get_image_size(img)
+    def __call__(self, img):
+        w, h = _get_image_size(img)
         if isinstance(self.ratio, float):
             pad_left = pad_right = round(self.ratio * w)
             pad_top = pad_bottom = round(self.ratio * h)
@@ -372,8 +372,31 @@ class PadRatio(object):
             pad_right = round(self.ratio[2] * w)
             pad_bottom = round(self.ratio[3] * h)
         padding = [pad_left, pad_top, pad_right, pad_bottom]
-        return F.pad(img, padding, self.fill, self.padding_mode)
+        return torchvision.transforms.functional.pad(img, padding, self.fill, self.padding_mode)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(ratio={self.ratio}, fill={self.fill}, padding_mode={self.padding_mode})"
+    
+
+class MinMaxNormalize(object):
+    def __init__(self, inplace=False):
+        self.inplace = inplace
+
+    def __call__(self, tensor: torch.Tensor) -> torch.Tensor:
+        if not isinstance(tensor, torch.Tensor):
+            raise TypeError(f"tensor should be Tensor Image. Got {type(tensor)}")
+        if not tensor.is_floating_point():
+            raise TypeError(f"Input tensor should be a float tensor. Got {tensor.dtype}.")
+        if tensor.ndim < 3:
+            raise ValueError(
+                f"Expected tensor to be a tensor image of size (..., C, H, W). Got tensor.size() = {tensor.size()}"
+            )
+        
+        if not self.inplace:
+            tensor = tensor.clone()
+        max_values, _ = tensor.flatten(-3).max(dim=-1)
+        min_values, _ = tensor.flatten(-3).min(dim=-1)
+        eps = torch.tensor(1e-9, dtype=torch.float32, device=tensor.device) 
+        range_values = torch.maximum(max_values - min_values, eps)
+        return tensor.sub_(min_values[..., None, None, None]).div_(range_values[..., None, None, None])
     
