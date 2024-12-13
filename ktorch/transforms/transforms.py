@@ -3,6 +3,7 @@ import random
 import numbers
 from io import BytesIO
 from collections.abc import Iterable
+from typing import Sequence
 
 import PIL
 from PIL import Image
@@ -13,7 +14,7 @@ import numpy as np
 
 __all__ = ['RandomScale', 'RandomRotate90', 'RandomScaleBlur', 'RandomJPEGQuality', 
            'CenterPadTo', 'CenterCropTo', 'Cutout', 'RandomShift', 'GridMask',
-           'BatchResizeMix']
+           'BatchResizeMix', 'PadRatio']
 
 
 class RandomScale(object):
@@ -335,4 +336,44 @@ class BatchResizeMix(object):
             inputs[index], size=(y_max - y_min, x_max - x_min), mode='bilinear', align_corners=False)
         targets = (1 - lamb) * targets + lamb * targets[index, :]
         return inputs, targets
+    
+
+class PadRatio(object):
+    def __init__(self, ratio, fill=0, padding_mode="constant"):
+        if not isinstance(ratio, (numbers.Number, tuple, list)):
+            raise TypeError("Got inappropriate padding arg")
+
+        if not isinstance(fill, (numbers.Number, tuple, list)):
+            raise TypeError("Got inappropriate fill arg")
+
+        if padding_mode not in ["constant", "edge", "reflect", "symmetric"]:
+            raise ValueError("Padding mode should be either constant, edge, reflect or symmetric")
+
+        if isinstance(ratio, Sequence) and len(ratio) not in [1, 2, 4]:
+            raise ValueError(
+                f"Padding must be an int or a 1, 2, or 4 element tuple, not a {len(ratio)} element tuple"
+            )
+
+        self.ratio = ratio
+        self.fill = fill
+        self.padding_mode = padding_mode
+
+    def forward(self, img):
+        w, h = F.get_image_size(img)
+        if isinstance(self.ratio, float):
+            pad_left = pad_right = round(self.ratio * w)
+            pad_top = pad_bottom = round(self.ratio * h)
+        if isinstance(self.ratio, tuple) and len(self.ratio) == 2:
+            pad_left = pad_right = round(self.ratio[0] * w)
+            pad_top = pad_bottom = round(self.ratio[1] * h)
+        if isinstance(self.ratio, tuple) and len(self.ratio) == 4:
+            pad_left = round(self.ratio[0] * w)
+            pad_top = round(self.ratio[1] * h)
+            pad_right = round(self.ratio[2] * w)
+            pad_bottom = round(self.ratio[3] * h)
+        padding = [pad_left, pad_top, pad_right, pad_bottom]
+        return F.pad(img, padding, self.fill, self.padding_mode)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(ratio={self.ratio}, fill={self.fill}, padding_mode={self.padding_mode})"
     
