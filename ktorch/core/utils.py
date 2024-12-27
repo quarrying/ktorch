@@ -44,7 +44,7 @@ def get_latest_model_path(model_path, extension='pth'):
     return model_path
 
 
-def get_run_name(run_tag=None):
+def get_run_name(run_tag=None, add_hostname=False):
     """A unique name for each run 
     
     References:
@@ -52,14 +52,16 @@ def get_run_name(run_tag=None):
     """
     time_str = datetime.datetime.strftime(datetime.datetime.now(), '%y%m%d_%H%M%S')
     if (run_tag is None) or (run_tag.strip() == ''):
-        run_name = '{}@{}'.format(time_str, socket.gethostname())
+        run_name = f'{time_str}'
     else:
-        run_name = '{}_{}@{}'.format(run_tag.strip(), time_str, socket.gethostname())
+        run_name = f'{run_tag.strip()}_{time_str}'
+    if add_hostname:
+        run_name += f'@{socket.gethostname()}'
     return run_name
  
 
-def get_run_save_dir(save_dir, run_tag=None, make_dir=True):
-    run_name = get_run_name(run_tag)
+def get_run_save_dir(save_dir, run_tag=None, add_hostname=True, make_dir=True):
+    run_name = get_run_name(run_tag, add_hostname)
     run_save_dir = os.path.join(os.path.expanduser(save_dir), run_name)
     if make_dir:
         os.makedirs(run_save_dir, exist_ok=True)
