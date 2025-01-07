@@ -2,11 +2,13 @@ import random
 
 import torch
 import torch.nn as nn
+from torch.nn import TransformerEncoderLayer
 
 from .pooling import GlobalAttentionPooling
 
 __all__ = ['ClassifierModel', 'GpBnFcBn', 'GpLnFcLn', 
-           'CclNorm2d', 'BatchL2Norm', 'BatchDropChannel']
+           'CclNorm2d', 'BatchL2Norm', 'BatchDropChannel',
+           'TransformerNeck']
 
 
 class ClassifierModel(nn.Module):
@@ -204,4 +206,21 @@ class BatchDropChannel(nn.Module):
         out = x * binary_tensor.expand_as(x)
         out = out / keep_prob
         return out
+    
+
+class TransformerNeck(nn.Module):
+    def __init__(self, input_dim, d_model=1024, nhead=8, dim_feedforward=2048):
+        super(TransformerNeck, self).__init__()
+        self.projector = nn.Linear(input_dim, d_model, bias=False)
+        self.encoder_layer = TransformerEncoderLayer(
+            d_model=d_model, nhead=nhead, dim_feedforward=dim_feedforward, batch_first=True)
+
+    def forward(self, x):
+        b, c, h, w = x.size()
+        x = x.view(b, c, h * w).permute(0, 2, 1)  # (b, h*w, c)
+        x = self.projector(x)  # (b, h*w, d_model)
+        x = self.encoder_layer(x)  # (b, h*w, d_model)
+        # 取序列的平均值（或其他聚合方法）以得到每个样本的表示
+        x = x.mean(dim=1)  # (b, d_model)
+        return x
     
