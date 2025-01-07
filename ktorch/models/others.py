@@ -1,10 +1,12 @@
+import random
+
 import torch
 import torch.nn as nn
 
 from .pooling import GlobalAttentionPooling
 
 __all__ = ['ClassifierModel', 'GpBnFcBn', 'GpLnFcLn', 
-           'CclNorm2d', 'BatchL2Norm']
+           'CclNorm2d', 'BatchL2Norm', 'BatchDropChannel']
 
 
 class ClassifierModel(nn.Module):
@@ -165,4 +167,41 @@ class BatchL2Norm(nn.Module):
             mean_scale = self.running_scale
         x = mean_scale * x / norm
         return x
+    
+
+class BatchDropChannel(nn.Module):
+    """During training, randomly zeroes some of the channel of the input tensor with probability p.
+    Note that this implementation drops channels uniformly across the entire batch.
+    """
+    def __init__(self, drop_prob: float = 0.1, p: float = 0.5) -> None:
+        super().__init__()
+        if drop_prob < 0 or drop_prob > 1:
+            raise ValueError(f"drop_prob has to be between 0 and 1, but got {drop_prob}")
+        if p < 0 or p > 1:
+            raise ValueError(f"p has to be between 0 and 1, but got {p}")
+        self.drop_prob = drop_prob
+        self.p = p
+        
+    def extra_repr(self) -> str:
+        return f'drop_prob={self.drop_prob}, p={self.p}'
+    
+    def forward(self, x: torch.Tensor):
+        if not self.training:
+            return x
+        if random.uniform(0, 1) < self.p:
+            return x
+        
+        num_channels = x.size(1)
+        if x.ndim == 4:
+            random_tensor = torch.rand(1, num_channels, 1, 1).to(x.device)
+        elif x.ndim == 2:
+            random_tensor = torch.rand(1, num_channels).to(x.device)
+        else:
+            raise ValueError(f'Unsupported ndim, only support 2 or 4, got {x.ndim}')
+
+        keep_prob = 1 - self.drop_prob
+        binary_tensor = (random_tensor < keep_prob).float()
+        out = x * binary_tensor.expand_as(x)
+        out = out / keep_prob
+        return out
     

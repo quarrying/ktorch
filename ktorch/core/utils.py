@@ -1,31 +1,45 @@
-import os
-import glob
-import socket
-import random
 import datetime
 import functools
+import glob
+import os
+import random
+import socket
+import warnings
 from dataclasses import dataclass
-from typing import List, Union, Optional
+from typing import List, Optional, Union
 
-import torch
 import khandy
 import numpy as np
+import torch
 
-
-__all__ = ['sum_tensor_list', 'get_latest_model_path', 'get_run_name', 
+__all__ = ['sum_tensors', 'sum_tensor_list', 'mean_tensors', 'get_latest_model_path', 'get_run_name', 
            'get_run_save_dir', 'set_random_seed', 'ModelParameterInfo',
            'convert_parameter_infos_to_markdown_table', 'get_model_parameter_infos']
 
 
-def sum_tensor_list(tensor_list):
+def sum_tensors(tensors: List[torch.Tensor]) -> torch.Tensor:
     """
     References:
         tf.math.add_n
     """
-    return functools.reduce(lambda acc, x: acc.add_(x), tensor_list,
-                            torch.zeros_like(tensor_list[0]))
-                            
-                            
+    if len(tensors) == 0:
+        raise ValueError('input tensor sequence is empty!')
+    return functools.reduce(lambda acc, x: acc.add_(x), tensors, torch.zeros_like(tensors[0]))
+
+
+def sum_tensor_list(tensors: List[torch.Tensor]) -> torch.Tensor:
+    """
+    References:
+        tf.math.add_n
+    """
+    warnings.warn('`sum_tensor_list` will be deprecated, use `sum_tensors` instead!')
+    return sum_tensors(tensors)
+
+
+def mean_tensors(tensors: List[torch.Tensor]) -> torch.Tensor:
+    return sum_tensors(tensors) / len(tensors)
+
+
 def get_latest_model_path(model_path, extension='pth'):
     """
     References:
